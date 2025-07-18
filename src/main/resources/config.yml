@@ -51,6 +51,12 @@ relay:
   use-discord-nickname: true
   # Name to display as the author in server status embeds
   server-embed-name: "CraftCord-Connect"
+  # Relay player death messages to Discord
+  death-messages: true
+  # Relay player advancements to Discord (respects announceAdvancements gamerule)
+  advancement-messages: true
+  # Relay image attachments and stickers from Discord to Minecraft as links or notices
+  relay-images-and-stickers: true
 
 # User Settings
 users:

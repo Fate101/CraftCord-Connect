@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.bukkit.Bukkit;
 import javax.annotation.Nonnull;
+import java.util.stream.Collectors;
 
 public class DiscordListener extends ListenerAdapter {
     
@@ -28,9 +29,26 @@ public class DiscordListener extends ListenerAdapter {
         
         // Get message content
         String message = event.getMessage().getContentDisplay();
-        
-        // Ignore empty messages
-        if (message.trim().isEmpty()) {
+        boolean relayMedia = plugin.getConfigManager().getConfig().getBoolean("relay.relay-images-and-stickers", true);
+        StringBuilder extra = new StringBuilder();
+        if (relayMedia) {
+            // Attachments (images/files)
+            var attachments = event.getMessage().getAttachments();
+            for (var att : attachments) {
+                if (att.isImage()) {
+                    extra.append(" [Image] ").append(att.getUrl());
+                } else {
+                    extra.append(" [File] ").append(att.getUrl());
+                }
+            }
+            // Stickers
+            var stickers = event.getMessage().getStickers();
+            for (var sticker : stickers) {
+                extra.append(" [Sticker] ").append(sticker.getName());
+            }
+        }
+        // Ignore empty messages unless there is media
+        if (message.trim().isEmpty() && extra.length() == 0) {
             return;
         }
         
@@ -44,8 +62,9 @@ public class DiscordListener extends ListenerAdapter {
         }
         
         // Run on main thread since we're modifying the world
+        String relayMsg = message + extra;
         Bukkit.getScheduler().runTask(plugin, () -> {
-            plugin.getDiscordManager().sendMessageToMinecraft(author, message);
+            plugin.getDiscordManager().sendMessageToMinecraft(author, relayMsg.trim());
         });
     }
 } 
