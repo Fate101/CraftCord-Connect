@@ -105,6 +105,10 @@ public class ConfigManager {
         return config.getBoolean("relay.use-discord-nickname", true);
     }
     
+    public String getServerEmbedName() {
+        return config.getString("relay.server-embed-name", "CraftCord-Connect");
+    }
+    
     public FileConfiguration getConfig() {
         return config;
     }

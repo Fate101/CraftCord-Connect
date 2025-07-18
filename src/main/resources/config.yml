@@ -49,6 +49,8 @@ relay:
   embed-color: "#00BFFF"
   # Use Discord display name/nickname instead of username when relaying messages to Minecraft
   use-discord-nickname: true
+  # Name to display as the author in server status embeds
+  server-embed-name: "CraftCord-Connect"
 
 # User Settings
 users:

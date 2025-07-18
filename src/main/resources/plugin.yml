@@ -4,7 +4,7 @@ main: com.craftcordconnect.CraftCordConnect
 api-version: 1.21
 authors: [Fate101]
 description: Bidirectional communication between Minecraft chat and Discord (CraftCord Connect)
-website: https://github.com/Fate101/CraftCordConnect
+website: https://github.com/Fate101/CraftCord-Connect
 
 commands:
   craftcord:

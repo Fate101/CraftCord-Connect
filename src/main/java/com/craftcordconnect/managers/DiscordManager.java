@@ -195,10 +195,17 @@ public class DiscordManager {
         try {
             TextChannel channel = jda.getTextChannelById(configManager.getChannelId());
             if (channel != null) {
-                channel.sendMessage(new net.dv8tion.jda.api.utils.messages.MessageCreateBuilder()
-                    .setContent("**Server Status**: " + status)
-                    .build())
-                    .queue();
+                EmbedBuilder embed = new EmbedBuilder();
+                embed.setAuthor(configManager.getServerEmbedName(), null, "https://mc-heads.net/avatar/00000000-0000-0000-0000-000000000000/128.png");
+                embed.setDescription(status);
+                if (status.contains("🟢")) {
+                    embed.setColor(Color.GREEN);
+                } else if (status.contains("🔴")) {
+                    embed.setColor(Color.RED);
+                } else {
+                    embed.setColor(configManager.getEmbedColor());
+                }
+                channel.sendMessageEmbeds(embed.build()).queue();
             }
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to send server status to Discord: " + e.getMessage());
@@ -209,10 +216,17 @@ public class DiscordManager {
         try {
             TextChannel channel = jda.getTextChannelById(configManager.getChannelId());
             if (channel != null) {
-                channel.sendMessage(new net.dv8tion.jda.api.utils.messages.MessageCreateBuilder()
-                    .setContent("**Server Status**: " + status)
-                    .build())
-                    .complete(); // Use complete() instead of queue() for synchronous execution
+                EmbedBuilder embed = new EmbedBuilder();
+                embed.setAuthor(configManager.getServerEmbedName(), null, "https://mc-heads.net/avatar/00000000-0000-0000-0000-000000000000/128.png");
+                embed.setDescription(status);
+                if (status.contains("🟢")) {
+                    embed.setColor(Color.GREEN);
+                } else if (status.contains("🔴")) {
+                    embed.setColor(Color.RED);
+                } else {
+                    embed.setColor(configManager.getEmbedColor());
+                }
+                channel.sendMessageEmbeds(embed.build()).complete();
             }
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to send server status to Discord: " + e.getMessage());
