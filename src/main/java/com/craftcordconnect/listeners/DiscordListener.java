@@ -29,7 +29,7 @@ public class DiscordListener extends ListenerAdapter {
         
         // Get message content
         String message = event.getMessage().getContentDisplay();
-        boolean relayMedia = plugin.getConfigManager().getConfig().getBoolean("relay.relay-images-and-stickers", true);
+        boolean relayMedia = plugin.getConfigManager().getConfig().getBoolean("relay.relay-links-and-media", true);
         StringBuilder extra = new StringBuilder();
         if (relayMedia) {
             // Attachments (images/files)

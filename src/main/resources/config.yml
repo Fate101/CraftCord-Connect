@@ -55,8 +55,8 @@ relay:
   death-messages: true
   # Relay player advancements to Discord (respects announceAdvancements gamerule)
   advancement-messages: true
-  # Relay image attachments and stickers from Discord to Minecraft as links or notices
-  relay-images-and-stickers: true
+  # Relay links, image attachments, and stickers from Discord to Minecraft as clickable buttons or notices
+  relay-links-and-media: true
 
 # User Settings
 users:

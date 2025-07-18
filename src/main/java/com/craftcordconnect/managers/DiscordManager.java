@@ -15,6 +15,8 @@ import javax.imageio.ImageIO;
 import java.util.concurrent.*;
 import java.awt.Color;
 import java.net.URI;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
 
 public class DiscordManager {
     
@@ -166,11 +168,63 @@ public class DiscordManager {
         
         // Apply color codes
         formattedMessage = ChatColor.translateAlternateColorCodes('&', formattedMessage);
-        
-        // Send to all online players who can receive Discord messages
-        for (Player player : plugin.getServer().getOnlinePlayers()) {
+
+        // Patterns
+        java.util.regex.Pattern imageOrFilePattern = java.util.regex.Pattern.compile("\\[(Image|File)] (https?://\\S+)");
+        java.util.regex.Pattern urlPattern = java.util.regex.Pattern.compile("(?<!\\[Image] |\\[File] )(https?://\\S+)");
+
+        for (org.bukkit.entity.Player player : plugin.getServer().getOnlinePlayers()) {
             if (plugin.getUserManager().canReceiveDiscordMessages(player)) {
-                player.sendMessage(formattedMessage);
+                // If there are no image/file links or URLs, just send as plain text
+                java.util.regex.Matcher matcher1 = imageOrFilePattern.matcher(formattedMessage);
+                java.util.regex.Matcher matcher2 = urlPattern.matcher(formattedMessage);
+                if (!matcher1.find() && !matcher2.find()) {
+                    player.sendMessage(formattedMessage);
+                    continue;
+                }
+                matcher1.reset();
+                matcher2.reset();
+                net.md_5.bungee.api.chat.TextComponent fullMsg = new net.md_5.bungee.api.chat.TextComponent("");
+                int lastEnd = 0;
+                // Merge both patterns into a single pass
+                java.util.List<java.util.regex.MatchResult> matches = new java.util.ArrayList<>();
+                while (matcher1.find()) matches.add(matcher1.toMatchResult());
+                while (matcher2.find()) matches.add(matcher2.toMatchResult());
+                matches.sort(java.util.Comparator.comparingInt(java.util.regex.MatchResult::start));
+                for (java.util.regex.MatchResult match : matches) {
+                    // Add text before the link
+                    String before = formattedMessage.substring(lastEnd, match.start());
+                    if (!before.isEmpty()) {
+                        fullMsg.addExtra(new net.md_5.bungee.api.chat.TextComponent(before));
+                    }
+                    String matchText = match.group();
+                    if (matchText.startsWith("[Image] ") || matchText.startsWith("[File] ")) {
+                        String type = matchText.startsWith("[Image] ") ? "Image" : "File";
+                        String url = match.group(2);
+                        String buttonText = type.equals("Image") ? "[Image Link]" : "[File Link]";
+                        net.md_5.bungee.api.chat.TextComponent button = new net.md_5.bungee.api.chat.TextComponent(buttonText);
+                        button.setColor(net.md_5.bungee.api.ChatColor.AQUA);
+                        button.setUnderlined(true);
+                        button.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
+                            net.md_5.bungee.api.chat.ClickEvent.Action.OPEN_URL, url));
+                        fullMsg.addExtra(button);
+                    } else {
+                        // Plain URL
+                        String url = match.group(1) != null ? match.group(1) : matchText;
+                        net.md_5.bungee.api.chat.TextComponent button = new net.md_5.bungee.api.chat.TextComponent("[Link]");
+                        button.setColor(net.md_5.bungee.api.ChatColor.AQUA);
+                        button.setUnderlined(true);
+                        button.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
+                            net.md_5.bungee.api.chat.ClickEvent.Action.OPEN_URL, url));
+                        fullMsg.addExtra(button);
+                    }
+                    lastEnd = match.end();
+                }
+                // Add any remaining text after the last link
+                if (lastEnd < formattedMessage.length()) {
+                    fullMsg.addExtra(new net.md_5.bungee.api.chat.TextComponent(formattedMessage.substring(lastEnd)));
+                }
+                player.spigot().sendMessage(fullMsg);
             }
         }
     }

@@ -79,6 +79,8 @@ relay:
     server-stop: true
     player-join: true
     player-leave: true
+  # Relay links, image attachments, and stickers from Discord to Minecraft as clickable buttons or notices
+  relay-links-and-media: true
 ```
 
 Replace `YOUR_BOT_TOKEN_HERE` and `YOUR_CHANNEL_ID_HERE` with your actual values.
@@ -129,6 +131,7 @@ After configuring, restart your server. The plugin should connect to Discord aut
 - `debug`: Enable detailed logging for troubleshooting
 - `system-events`: Configure which system events to notify about
 - `ignored-messages`: Regex patterns for messages to ignore
+- `relay-links-and-media`: If true, links, image attachments, and stickers from Discord will be relayed to Minecraft as clickable buttons (e.g., [Link], [Image Link], [File Link]) or notices. If false, these will not be relayed.
 
 ### User Settings
 - `default-receive`: Default setting for receiving Discord messages
