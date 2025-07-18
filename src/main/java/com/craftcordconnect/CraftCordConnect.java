@@ -45,7 +45,7 @@ public class CraftCordConnect extends JavaPlugin {
         // Initialize Discord bot
         initializeDiscordBot();
         
-        getLogger().info("CraftCord Connect has been enabled!");
+        getLogger().info("CraftCord-Connect has been enabled!");
     }
     
     @Override
@@ -80,7 +80,7 @@ public class CraftCordConnect extends JavaPlugin {
             }
         }
         
-        getLogger().info("CraftCord Connect has been disabled!");
+        getLogger().info("CraftCord-Connect has been disabled!");
     }
     
     private void initializeDiscordBot() {

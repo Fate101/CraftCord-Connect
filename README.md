@@ -1,4 +1,4 @@
-# CraftCord Connect
+# CraftCord-Connect
 
 A Minecraft 1.21.7 plugin that enables bidirectional communication between Minecraft chat and Discord channels.
 

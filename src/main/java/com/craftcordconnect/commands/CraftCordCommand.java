@@ -62,14 +62,14 @@ public class CraftCordCommand implements CommandExecutor, TabCompleter {
     }
     
     private void sendHelpMessage(CommandSender sender) {
-        sender.sendMessage(ChatColor.GOLD + "=== CraftCord Connect Commands ===");
+        sender.sendMessage(ChatColor.GOLD + "=== CraftCord-Connect Commands ===");
         sender.sendMessage(ChatColor.YELLOW + "/craftcord reload " + ChatColor.WHITE + "- Reload configuration");
         sender.sendMessage(ChatColor.YELLOW + "/craftcord status " + ChatColor.WHITE + "- Show connection status");
         sender.sendMessage(ChatColor.YELLOW + "/craftcord toggle <on|off> " + ChatColor.WHITE + "- Enable/disable relay");
     }
     
     private void sendStatusMessage(CommandSender sender) {
-        sender.sendMessage(ChatColor.GOLD + "=== CraftCord Connect Status ===");
+        sender.sendMessage(ChatColor.GOLD + "=== CraftCord-Connect Status ===");
         sender.sendMessage(ChatColor.YELLOW + "Discord Connection: " + 
             (plugin.getDiscordManager().isConnected() ? ChatColor.GREEN + "Connected" : ChatColor.RED + "Disconnected"));
         sender.sendMessage(ChatColor.YELLOW + "Relay Enabled: " + 

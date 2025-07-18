@@ -9,8 +9,8 @@
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>CraftCord Connect</name>
-    <description>A plugin that enables bidirectional communication between Minecraft chat and Discord (CraftCord Connect)</description>
+    <name>CraftCord-Connect</name>
+    <description>A plugin that enables bidirectional communication between Minecraft chat and Discord (CraftCord-Connect)</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
