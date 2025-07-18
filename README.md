@@ -15,6 +15,7 @@ A Minecraft 1.21.7 plugin that enables bidirectional communication between Minec
 - **Player Avatars in Embeds**: Minecraft player avatars are shown in Discord embeds
 - **System Events**: Server start/stop notifications
 - **Debug Mode**: Comprehensive logging for troubleshooting
+- **Discord Role Color Relay**: Usernames in Minecraft chat can be colored to match the sender's highest Discord role (with full hex color support, Minecraft 1.16+). Toggle with `relay.use-discord-role-color` in config.
 
 ## Requirements
 
@@ -81,6 +82,8 @@ relay:
     player-leave: true
   # Relay links, image attachments, and stickers from Discord to Minecraft as clickable buttons or notices
   relay-links-and-media: true
+  # Use Discord role color for usernames in Minecraft chat (if supported by your server version)
+  use-discord-role-color: true
 ```
 
 Replace `YOUR_BOT_TOKEN_HERE` and `YOUR_CHANNEL_ID_HERE` with your actual values.
@@ -132,6 +135,7 @@ After configuring, restart your server. The plugin should connect to Discord aut
 - `system-events`: Configure which system events to notify about
 - `ignored-messages`: Regex patterns for messages to ignore
 - `relay-links-and-media`: If true, links, image attachments, and stickers from Discord will be relayed to Minecraft as clickable buttons (e.g., [Link], [Image Link], [File Link]) or notices. If false, these will not be relayed.
+- `use-discord-role-color`: If true (default), usernames in Minecraft chat will be colored to match the sender's highest Discord role (using full hex color codes, requires Minecraft 1.16+). If false, the default color is used.
 
 ### User Settings
 - `default-receive`: Default setting for receiving Discord messages

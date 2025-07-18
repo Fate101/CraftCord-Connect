@@ -57,6 +57,8 @@ relay:
   advancement-messages: true
   # Relay links, image attachments, and stickers from Discord to Minecraft as clickable buttons or notices
   relay-links-and-media: true
+  # Use Discord role color for usernames in Minecraft chat (if supported by your server version)
+  use-discord-role-color: true
 
 # User Settings
 users:

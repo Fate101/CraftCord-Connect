@@ -44,7 +44,12 @@ public class DiscordListener extends ListenerAdapter {
             // Stickers
             var stickers = event.getMessage().getStickers();
             for (var sticker : stickers) {
-                extra.append(" [Sticker] ").append(sticker.getName());
+                String url = sticker.getIconUrl();
+                if (url != null) {
+                    extra.append(" [Sticker] ").append(url);
+                } else {
+                    extra.append(" [Sticker] ").append(sticker.getName());
+                }
             }
         }
         // Ignore empty messages unless there is media
@@ -54,17 +59,23 @@ public class DiscordListener extends ListenerAdapter {
         
         // Relay message to Minecraft
         String author;
+        String authorColorHex = null;
         var member = event.getMember();
         if (plugin.getConfigManager().isUseDiscordNickname() && member != null) {
             author = member.getEffectiveName();
         } else {
             author = event.getAuthor().getName();
         }
-        
+        if (plugin.getConfigManager().isUseDiscordRoleColor() && member != null && member.getColor() != null) {
+            java.awt.Color color = member.getColor();
+            authorColorHex = String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
+        }
         // Run on main thread since we're modifying the world
         String relayMsg = message + extra;
+        String finalAuthor = author;
+        String finalAuthorColorHex = authorColorHex;
         Bukkit.getScheduler().runTask(plugin, () -> {
-            plugin.getDiscordManager().sendMessageToMinecraft(author, relayMsg.trim());
+            plugin.getDiscordManager().sendMessageToMinecraft(finalAuthor, relayMsg.trim(), finalAuthorColorHex);
         });
     }
 } 

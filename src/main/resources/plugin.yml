@@ -1,4 +1,4 @@
-name: CraftCordConnect
+name: CraftCord-Connect
 version: 1.0.0
 main: com.craftcordconnect.CraftCordConnect
 api-version: 1.21
@@ -35,4 +35,4 @@ permissions:
     children:
       craftcord.toggle: true
       craftcord.send: true
-      craftcord.receive: true 
+      craftcord.receive: true

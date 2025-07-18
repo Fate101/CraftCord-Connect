@@ -21,6 +21,30 @@ public class CraftCordCommand implements CommandExecutor, TabCompleter {
     
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length > 0 && args[0].equalsIgnoreCase("viewmap")) {
+            if (!(sender instanceof org.bukkit.entity.Player)) {
+                sender.sendMessage("This command can only be used by players.");
+                return true;
+            }
+            if (args.length < 3) {
+                sender.sendMessage("Usage: /craftcord viewmap <image|sticker> <code>");
+                return true;
+            }
+            String type = args[1].toLowerCase();
+            if (!type.equals("image") && !type.equals("sticker")) {
+                sender.sendMessage("Type must be image or sticker.");
+                return true;
+            }
+            String code = args[2];
+            String url = plugin.getDiscordManager().getUrlForCode(code);
+            if (url == null) {
+                sender.sendMessage("This image or sticker link has expired or is invalid.");
+                return true;
+            }
+            plugin.getDiscordManager().handleImageMapRequest((org.bukkit.entity.Player) sender, url, type);
+            return true;
+        }
+        
         if (!sender.hasPermission("discordrelay.admin")) {
             sender.sendMessage(ChatColor.RED + "You don't have permission to use this command!");
             return true;
@@ -80,6 +104,7 @@ public class CraftCordCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
+            // Do NOT include 'viewmap' in this list!
             return Arrays.asList("reload", "status", "toggle");
         } else if (args.length == 2 && args[0].equalsIgnoreCase("toggle")) {
             return Arrays.asList("on", "off");

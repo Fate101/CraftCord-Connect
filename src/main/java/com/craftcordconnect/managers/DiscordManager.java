@@ -15,8 +15,18 @@ import javax.imageio.ImageIO;
 import java.util.concurrent.*;
 import java.awt.Color;
 import java.net.URI;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
+import org.bukkit.Bukkit;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.MapMeta;
+import org.bukkit.Material;
+import org.bukkit.map.MapView;
+import org.bukkit.map.MapRenderer;
+import org.bukkit.map.MapCanvas;
+import org.bukkit.map.MapPalette;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Collections;
+import java.net.URL;
 
 public class DiscordManager {
     
@@ -28,6 +38,16 @@ public class DiscordManager {
     private final ConcurrentHashMap<String, Color> avatarColorCache = new ConcurrentHashMap<>();
     private final ExecutorService colorExecutor = Executors.newCachedThreadPool();
     
+    // Track temporary maps for cleanup
+    public final ConcurrentHashMap<UUID, List<MapView>> tempMaps = new ConcurrentHashMap<>();
+
+    // Server-side mapping for viewmap codes
+    private final Map<String, String> urlMap = new ConcurrentHashMap<>();
+
+    // Track previous main hand items and their slots for map restore
+    private final Map<UUID, ItemStack> previousMainHandItems = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> previousMainHandSlots = new ConcurrentHashMap<>();
+
     public DiscordManager(CraftCordConnect plugin) {
         this.plugin = plugin;
         this.configManager = plugin.getConfigManager();
@@ -156,27 +176,26 @@ public class DiscordManager {
         return new Color((int)(sumR/count), (int)(sumG/count), (int)(sumB/count));
     }
     
-    public void sendMessageToMinecraft(String author, String message) {
+    public void sendMessageToMinecraft(String author, String message, String authorColorHex) {
         if (!configManager.isRelayEnabled()) {
             return;
         }
-        
+        String coloredAuthor = author;
+        if (authorColorHex != null && !authorColorHex.isEmpty()) {
+            coloredAuthor = toMinecraftHexColor(authorColorHex) + author + ChatColor.RESET;
+        }
         // Format message
         String formattedMessage = configManager.getMinecraftFormat()
-                .replace("{author}", author)
+                .replace("{author}", coloredAuthor)
                 .replace("{message}", message);
-        
         // Apply color codes
         formattedMessage = ChatColor.translateAlternateColorCodes('&', formattedMessage);
-
         // Patterns
-        java.util.regex.Pattern imageOrFilePattern = java.util.regex.Pattern.compile("\\[(Image|File)] (https?://\\S+)");
-        java.util.regex.Pattern urlPattern = java.util.regex.Pattern.compile("(?<!\\[Image] |\\[File] )(https?://\\S+)");
-
+        java.util.regex.Pattern imageOrFileOrStickerPattern = java.util.regex.Pattern.compile("\\[(Image|File|Sticker)] (https?://\\S+)");
+        java.util.regex.Pattern urlPattern = java.util.regex.Pattern.compile("(?<!\\[Image] |\\[File] |\\[Sticker] )(https?://\\S+)");
         for (org.bukkit.entity.Player player : plugin.getServer().getOnlinePlayers()) {
             if (plugin.getUserManager().canReceiveDiscordMessages(player)) {
-                // If there are no image/file links or URLs, just send as plain text
-                java.util.regex.Matcher matcher1 = imageOrFilePattern.matcher(formattedMessage);
+                java.util.regex.Matcher matcher1 = imageOrFileOrStickerPattern.matcher(formattedMessage);
                 java.util.regex.Matcher matcher2 = urlPattern.matcher(formattedMessage);
                 if (!matcher1.find() && !matcher2.find()) {
                     player.sendMessage(formattedMessage);
@@ -186,30 +205,60 @@ public class DiscordManager {
                 matcher2.reset();
                 net.md_5.bungee.api.chat.TextComponent fullMsg = new net.md_5.bungee.api.chat.TextComponent("");
                 int lastEnd = 0;
-                // Merge both patterns into a single pass
                 java.util.List<java.util.regex.MatchResult> matches = new java.util.ArrayList<>();
                 while (matcher1.find()) matches.add(matcher1.toMatchResult());
                 while (matcher2.find()) matches.add(matcher2.toMatchResult());
                 matches.sort(java.util.Comparator.comparingInt(java.util.regex.MatchResult::start));
                 for (java.util.regex.MatchResult match : matches) {
-                    // Add text before the link
                     String before = formattedMessage.substring(lastEnd, match.start());
                     if (!before.isEmpty()) {
                         fullMsg.addExtra(new net.md_5.bungee.api.chat.TextComponent(before));
                     }
                     String matchText = match.group();
-                    if (matchText.startsWith("[Image] ") || matchText.startsWith("[File] ")) {
-                        String type = matchText.startsWith("[Image] ") ? "Image" : "File";
+                    if (matchText.startsWith("[Image] ") || matchText.startsWith("[Sticker] ") || matchText.startsWith("[File] ")) {
+                        String type = matchText.startsWith("[Image] ") ? "Image" : (matchText.startsWith("[Sticker] ") ? "Sticker" : "File");
                         String url = match.group(2);
-                        String buttonText = type.equals("Image") ? "[Image Link]" : "[File Link]";
-                        net.md_5.bungee.api.chat.TextComponent button = new net.md_5.bungee.api.chat.TextComponent(buttonText);
-                        button.setColor(net.md_5.bungee.api.ChatColor.AQUA);
-                        button.setUnderlined(true);
-                        button.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
-                            net.md_5.bungee.api.chat.ClickEvent.Action.OPEN_URL, url));
-                        fullMsg.addExtra(button);
+                        if (type.equals("Image")) {
+                            String code = generateShortCode();
+                            urlMap.put(code, url);
+                            net.md_5.bungee.api.chat.TextComponent viewButton = new net.md_5.bungee.api.chat.TextComponent("[View Image]");
+                            viewButton.setColor(net.md_5.bungee.api.ChatColor.GREEN);
+                            viewButton.setUnderlined(true);
+                            viewButton.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
+                                net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND, "/craftcord viewmap image " + code));
+                            net.md_5.bungee.api.chat.TextComponent linkButton = new net.md_5.bungee.api.chat.TextComponent("[Image Link]");
+                            linkButton.setColor(net.md_5.bungee.api.ChatColor.AQUA);
+                            linkButton.setUnderlined(true);
+                            linkButton.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
+                                net.md_5.bungee.api.chat.ClickEvent.Action.OPEN_URL, url));
+                            fullMsg.addExtra(viewButton);
+                            fullMsg.addExtra(new net.md_5.bungee.api.chat.TextComponent(" "));
+                            fullMsg.addExtra(linkButton);
+                        } else if (type.equals("Sticker")) {
+                            String code = generateShortCode();
+                            urlMap.put(code, url);
+                            net.md_5.bungee.api.chat.TextComponent viewButton = new net.md_5.bungee.api.chat.TextComponent("[View Sticker]");
+                            viewButton.setColor(net.md_5.bungee.api.ChatColor.GREEN);
+                            viewButton.setUnderlined(true);
+                            viewButton.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
+                                net.md_5.bungee.api.chat.ClickEvent.Action.RUN_COMMAND, "/craftcord viewmap sticker " + code));
+                            net.md_5.bungee.api.chat.TextComponent linkButton = new net.md_5.bungee.api.chat.TextComponent("[Sticker Link]");
+                            linkButton.setColor(net.md_5.bungee.api.ChatColor.AQUA);
+                            linkButton.setUnderlined(true);
+                            linkButton.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
+                                net.md_5.bungee.api.chat.ClickEvent.Action.OPEN_URL, url));
+                            fullMsg.addExtra(viewButton);
+                            fullMsg.addExtra(new net.md_5.bungee.api.chat.TextComponent(" "));
+                            fullMsg.addExtra(linkButton);
+                        } else if (type.equals("File")) {
+                            net.md_5.bungee.api.chat.TextComponent linkButton = new net.md_5.bungee.api.chat.TextComponent("[File Link]");
+                            linkButton.setColor(net.md_5.bungee.api.ChatColor.AQUA);
+                            linkButton.setUnderlined(true);
+                            linkButton.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
+                                net.md_5.bungee.api.chat.ClickEvent.Action.OPEN_URL, url));
+                            fullMsg.addExtra(linkButton);
+                        }
                     } else {
-                        // Plain URL
                         String url = match.group(1) != null ? match.group(1) : matchText;
                         net.md_5.bungee.api.chat.TextComponent button = new net.md_5.bungee.api.chat.TextComponent("[Link]");
                         button.setColor(net.md_5.bungee.api.ChatColor.AQUA);
@@ -220,7 +269,6 @@ public class DiscordManager {
                     }
                     lastEnd = match.end();
                 }
-                // Add any remaining text after the last link
                 if (lastEnd < formattedMessage.length()) {
                     fullMsg.addExtra(new net.md_5.bungee.api.chat.TextComponent(formattedMessage.substring(lastEnd)));
                 }
@@ -303,5 +351,126 @@ public class DiscordManager {
         return jda != null && jda.getStatus() == net.dv8tion.jda.api.JDA.Status.CONNECTED;
     }
 
+    // Call this when a player clicks an [Image Link] or [Sticker Link] button
+    public void handleImageMapRequest(Player player, String url, String type) {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                BufferedImage image = ImageIO.read(new URL(url));
+                if (image == null) {
+                    player.sendMessage("§cFailed to load image for map.");
+                    return;
+                }
+                // Scale and center image to fit 128x128, preserving aspect ratio
+                int targetSize = 128;
+                int imgW = image.getWidth();
+                int imgH = image.getHeight();
+                double scale = Math.min((double)targetSize / imgW, (double)targetSize / imgH);
+                int newW = (int)(imgW * scale);
+                int newH = (int)(imgH * scale);
+                BufferedImage resized = new BufferedImage(targetSize, targetSize, BufferedImage.TYPE_INT_RGB);
+                java.awt.Graphics2D g = resized.createGraphics();
+                g.setColor(java.awt.Color.BLACK);
+                g.fillRect(0, 0, targetSize, targetSize);
+                int x = (targetSize - newW) / 2;
+                int y = (targetSize - newH) / 2;
+                g.drawImage(image, x, y, newW, newH, null);
+                g.dispose();
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    MapView mapView = Bukkit.createMap(player.getWorld());
+                    mapView.getRenderers().clear();
+                    mapView.addRenderer(new MapRenderer() {
+                        private boolean rendered = false;
+                        @Override
+                        public void render(MapView view, MapCanvas canvas, Player p) {
+                            if (!rendered) {
+                                canvas.drawImage(0, 0, resized);
+                                rendered = true;
+                            }
+                        }
+                    });
+                    ItemStack mapItem = new ItemStack(Material.FILLED_MAP, 1);
+                    MapMeta meta = (MapMeta) mapItem.getItemMeta();
+                    meta.setMapView(mapView);
+                    mapItem.setItemMeta(meta);
+                    // Store previous main hand item and its slot, then give map in hand
+                    UUID uuid = player.getUniqueId();
+                    ItemStack prev = player.getInventory().getItemInMainHand();
+                    int currentSlot = player.getInventory().getHeldItemSlot();
+                    
+                    // Only store the item if it's not null and not air
+                    if (prev != null && prev.getType() != Material.AIR) {
+                        previousMainHandItems.put(uuid, prev.clone());
+                        previousMainHandSlots.put(uuid, currentSlot);
+                    } else {
+                        // If no item to restore, still track the slot but don't store null item
+                        previousMainHandSlots.put(uuid, currentSlot);
+                    }
+                    
+                    player.getInventory().setItemInMainHand(mapItem);
+                    // Track for cleanup
+                    tempMaps.computeIfAbsent(uuid, k -> Collections.synchronizedList(new ArrayList<>())).add(mapView);
+                    // Schedule removal after 30 seconds
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        restorePreviousMainHandItem(player);
+                        // Optionally, remove mapView from server (advanced: MapView API cleanup)
+                    }, 20 * 30);
+                    player.sendMessage("§aYou received a temporary map for this " + type.toLowerCase() + ". It will be removed soon!");
+                });
+            } catch (Exception e) {
+                Bukkit.getScheduler().runTask(plugin, () -> player.sendMessage("§cFailed to load image for map: " + e.getMessage()));
+            }
+        });
+    }
+
+    private String generateShortCode() {
+        String chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder code = new StringBuilder();
+        Random random = new Random();
+        for (int i = 0; i < 6; i++) {
+            code.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return code.toString();
+    }
+
+    public String getUrlForCode(String code) {
+        return urlMap.get(code); // Do not remove, so it persists until server restarts
+    }
+
     // Removed isWebhookReady and getWebhook as webhooks are no longer used
+
+    // Restore previous main hand item for a player to its original slot
+    public void restorePreviousMainHandItem(Player player) {
+        UUID uuid = player.getUniqueId();
+        ItemStack prev = previousMainHandItems.remove(uuid);
+        Integer originalSlot = previousMainHandSlots.remove(uuid);
+        
+        if (prev != null && prev.getType() != Material.AIR && originalSlot != null) {
+            // Check if the original slot is empty or contains the map
+            ItemStack currentInSlot = player.getInventory().getItem(originalSlot);
+            if (currentInSlot == null || currentInSlot.getType() == Material.AIR || 
+                (currentInSlot.getType() == Material.FILLED_MAP && currentInSlot.hasItemMeta())) {
+                // Slot is empty or contains our map, safe to restore
+                player.getInventory().setItem(originalSlot, prev);
+            } else {
+                // Slot is occupied by something else, try to add to inventory
+                player.getInventory().addItem(prev);
+            }
+        } else if (originalSlot != null) {
+            // No item to restore, but we should still clear the map from the slot
+            ItemStack currentInSlot = player.getInventory().getItem(originalSlot);
+            if (currentInSlot != null && currentInSlot.getType() == Material.FILLED_MAP && currentInSlot.hasItemMeta()) {
+                player.getInventory().setItem(originalSlot, null);
+            }
+        }
+    }
+
+    // Utility to convert #RRGGBB to §x§R§R§G§G§B§B
+    public static String toMinecraftHexColor(String hex) {
+        hex = hex.replace("#", "");
+        StringBuilder sb = new StringBuilder("§x");
+        for (char c : hex.toCharArray()) {
+            sb.append('§').append(c);
+        }
+        return sb.toString();
+    }
 } 

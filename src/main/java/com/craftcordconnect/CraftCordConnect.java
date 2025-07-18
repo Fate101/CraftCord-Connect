@@ -37,6 +37,9 @@ public class CraftCordConnect extends JavaPlugin {
         // Register commands
         getCommand("craftcord").setExecutor(new CraftCordCommand(this));
         getCommand("craftcordtoggle").setExecutor(new CraftCordToggleCommand(this));
+        // getCommand("viewmap").setExecutor(new CraftCordCommand(this)); // Removed from plugin.yml for hidden command
+
+        // Removed dynamic registration of /viewmap, now handled as a subcommand of /craftcord
         
         // Register listeners
         getServer().getPluginManager().registerEvents(new ChatListener(this), this);
