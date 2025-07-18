@@ -1,0 +1,31 @@
+name: CraftCordConnect
+version: 1.0.0
+main: com.craftcordconnect.CraftCordConnect
+api-version: 1.21
+authors: [Fate101]
+description: Bidirectional communication between Minecraft chat and Discord (CraftCord Connect)
+website: https://github.com/Fate101/CraftCordConnect
+
+commands:
+  craftcord:
+    description: Main command for CraftCord Connect plugin
+    usage: /craftcord <reload|toggle|status>
+    permission: discordrelay.admin
+  craftcordtoggle:
+    description: Toggle CraftCord Connect relay for yourself
+    usage: /craftcordtoggle [receive|send|all]
+    permission: discordrelay.toggle
+
+permissions:
+  discordrelay.admin:
+    description: Allows access to admin commands
+    default: op
+  discordrelay.toggle:
+    description: Allows users to toggle relay settings
+    default: true
+  discordrelay.send:
+    description: Allows sending messages to Discord
+    default: true
+  discordrelay.receive:
+    description: Allows receiving messages from Discord
+    default: true 

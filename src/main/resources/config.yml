@@ -1,0 +1,60 @@
+# Minecraft Discord Relay Configuration
+
+# Discord Bot Configuration
+discord:
+  # Your Discord Bot Token (get from https://discord.com/developers/applications)
+  bot-token: "YOUR_BOT_TOKEN_HERE"
+  
+  # Discord Channel ID where messages will be relayed
+  channel-id: "YOUR_CHANNEL_ID_HERE"
+  
+  # Bot status message
+  status-message: "Minecraft Server Online"
+
+# Relay Configuration
+relay:
+  # Enable/disable the relay
+  enabled: true
+  
+  # Format for messages sent to Discord (now only used for legacy or fallback)
+  discord-format: "**{player}**: {message}"
+  
+  # Format for messages received from Discord
+  minecraft-format: "&b[Discord] &f{author}: {message}"
+  
+  # Maximum message length (Discord has a 2000 character limit)
+  max-message-length: 1900
+  
+  # Enable/disable server status updates
+  server-status: true
+  
+  # System events to notify Discord about
+  system-events:
+    server-start: true
+    server-stop: true
+    player-join: true
+    player-leave: true
+  
+  # Enable debug logging
+  debug: false
+  
+  # Messages to ignore (regex patterns)
+  ignored-messages:
+    - "^/.*$"  # Commands
+    - "^\\[.*\\]"  # Plugin messages
+  
+  # Enable dynamic embed color based on the player's avatar (may impact performance, see README)
+  dynamic-embed-color: true
+  # Embed color to use when dynamic-embed-color is false (hex code, e.g. "#00BFFF"). If invalid, defaults to #00BFFF
+  embed-color: "#00BFFF"
+  # Use Discord display name/nickname instead of username when relaying messages to Minecraft
+  use-discord-nickname: true
+
+# User Settings
+users:
+  # Default settings for new users
+  default-receive: true
+  default-send: true
+  
+  # Store user preferences
+  save-preferences: true 
