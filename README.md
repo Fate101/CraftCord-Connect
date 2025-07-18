@@ -12,7 +12,7 @@ A Minecraft 1.21.7 plugin that enables bidirectional communication between Minec
 - **No Extra Ports**: Uses Discord's API, no additional ports need to be opened
 - **Configurable**: Customizable message formats and settings
 - **Server Status**: Automatic notifications when players join/leave
-- **Webhook Support**: Messages appear as actual players with their Minecraft avatars
+- **Player Avatars in Embeds**: Minecraft player avatars are shown in Discord embeds
 - **System Events**: Server start/stop notifications
 - **Debug Mode**: Comprehensive logging for troubleshooting
 
@@ -34,7 +34,6 @@ A Minecraft 1.21.7 plugin that enables bidirectional communication between Minec
    - Send Messages
    - Read Message History
    - Use Slash Commands
-   - **Manage Webhooks** (required for webhook mode)
 6. Go to "OAuth2" → "URL Generator"
 7. Select "bot" scope and the permissions above
 8. Use the generated URL to invite the bot to your server
@@ -70,7 +69,7 @@ relay:
   embed-color: "#00BFFF"
   # Use Discord display name/nickname instead of username when relaying messages to Minecraft
   use-discord-nickname: true
-  discord-format: "**{player}**: {message}"  # Only used in bot mode
+  discord-format: "**{player}**: {message}"
   minecraft-format: "&b[Discord] &f{author}: {message}"
   max-message-length: 1900
   server-status: true
@@ -93,7 +92,7 @@ After configuring, restart your server. The plugin should connect to Discord aut
 ### Admin Commands
 
 - `/craftcord reload` - Reload the configuration
-- `/craftcord status` - Show connection status and webhook status
+- `/craftcord status` - Show connection status
 - `/craftcord toggle <on|off>` - Enable/disable the relay
 
 ### User Commands
@@ -105,10 +104,11 @@ After configuring, restart your server. The plugin should connect to Discord aut
 
 ## Permissions
 
-- `discordrelay.admin` - Access to admin commands (default: op)
-- `discordrelay.toggle` - Allow users to toggle relay settings (default: true)
-- `discordrelay.send` - Allow sending messages to Discord (default: true)
-- `discordrelay.receive` - Allow receiving messages from Discord (default: true)
+- `craftcord.admin` - Access to admin commands (default: op)
+- `craftcord.player` - Grants all standard player permissions (toggle, send, receive) (default: true)
+  - `craftcord.toggle` - Allow users to toggle relay settings (default: true)
+  - `craftcord.send` - Allow sending messages to Discord (default: true)
+  - `craftcord.receive` - Allow receiving messages from Discord (default: true)
 
 ## Configuration Options
 
@@ -122,7 +122,7 @@ After configuring, restart your server. The plugin should connect to Discord aut
 - `dynamic-embed-color`: If true, the embed color on Discord will match the dominant color of the player's Minecraft avatar. This is done asynchronously and cached per player, but may add a small delay for the first message from each player. Set to false to use a default color for all embeds.
 - `embed-color`: The hex code (e.g. `#00BFFF`) for the embed color when `dynamic-embed-color` is false, or as a fallback if color extraction fails. If the value is invalid or missing, the plugin will use `#00BFFF` as a safe default.
 - `use-discord-nickname`: If true (default), the plugin will use the Discord display name/nickname when relaying messages from Discord to Minecraft. If false, it will use the Discord username instead.
-- `discord-format`: Format for messages sent to Discord (bot mode only)
+- `discord-format`: Format for messages sent to Discord
 - `minecraft-format`: Format for messages received from Discord
 - `max-message-length`: Maximum message length (Discord limit: 2000)
 - `server-status`: Enable server status notifications
@@ -145,30 +145,34 @@ After configuring, restart your server. The plugin should connect to Discord aut
 ## Troubleshooting
 
 ### Bot Not Connecting
-- Check that your bot token is correct
-- Ensure the bot has the required permissions
-- Verify the bot is invited to your server
+- Double-check your Discord bot token in `config.yml`.
+- Ensure your bot has the following permissions in your Discord server:
+  - Send Messages
+  - Read Message History
+  - Use Slash Commands
+- Make sure the bot is invited to the correct server and channel.
+- Check the server console/logs for any error messages on startup.
 
 ### Messages Not Relaying
-- Check that the channel ID is correct
-- Ensure the relay is enabled in config
-- Verify user permissions
-- Enable debug mode to see detailed logs
+- Verify the channel ID in `config.yml` matches your Discord channel.
+- Ensure the relay is enabled in the config (`relay.enabled: true`).
+- Check that users have the correct permissions (`craftcord.player` or its children).
+- Enable debug mode (`debug: true`) for more detailed logs.
 
-### Webhook Issues
-- Ensure the bot has "Manage Webhooks" permission
-- Try disabling webhook mode (`use-webhooks: false`) as fallback
-- Check debug logs for webhook initialization errors
-
-### Avatar Issues
-- Try disabling avatars (`use-avatars: false`) if they don't work
-- Enable debug mode to see avatar URL generation
-- Some avatar services may be rate-limited
+### Avatar/Embed Color Issues
+- If you experience delays, try disabling dynamic embed color (`dynamic-embed-color: false`).
+- Some avatar services may be rate-limited or temporarily unavailable.
+- Enable debug mode to see detailed logs about avatar fetching and embed color.
 
 ### Plugin Not Loading
-- Ensure you're using Java 17+
-- Check server logs for error messages
-- Verify the plugin is compatible with your server version
+- Ensure you are running Java 17 or higher.
+- Check for errors in the server console/logs.
+- Make sure the plugin JAR is in the correct `plugins` folder.
+- Verify the plugin is compatible with your Minecraft server version.
+
+### General Tips
+- Use `/craftcord reload` to reload the configuration after making changes.
+- If you encounter persistent issues, enable debug mode and review the logs for more information.
 
 ## Support
 
@@ -177,18 +181,12 @@ If you encounter issues:
 2. Enable debug mode (`debug: true`) for detailed logging
 3. Verify your Discord bot configuration
 4. Ensure all permissions are set correctly
-5. Try bot mode (`use-webhooks: false`) if webhook mode fails
 
 ## AI Development Disclosure
 
-This plugin was developed with AI assistance to ensure:
-- **Best Practices**: Following Minecraft plugin development standards
-- **Comprehensive Features**: Full bidirectional communication with user controls
-- **Robust Error Handling**: Graceful fallbacks and detailed logging
-- **Modern Architecture**: Clean code structure with proper separation of concerns
-- **Extensive Testing**: Multiple scenarios covered with debug capabilities
+This plugin was built with a lot of help from AI tools (and a bit of human creativity). The code, features, and documentation were all shaped by a mix of AI suggestions and hands-on tinkering. If you spot something clever, it might have been the AI—or maybe just a lucky guess!
 
-The AI collaboration helped create a production-ready plugin with enterprise-level features while maintaining simplicity for end users.
+Feel free to fork, improve, or just enjoy the plugin. If you have ideas or want to contribute, jump in!
 
 ## License
 

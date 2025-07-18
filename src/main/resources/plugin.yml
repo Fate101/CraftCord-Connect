@@ -10,22 +10,29 @@ commands:
   craftcord:
     description: Main command for CraftCord Connect plugin
     usage: /craftcord <reload|toggle|status>
-    permission: discordrelay.admin
+    permission: craftcord.admin
   craftcordtoggle:
     description: Toggle CraftCord Connect relay for yourself
     usage: /craftcordtoggle [receive|send|all]
-    permission: discordrelay.toggle
+    permission: craftcord.toggle
 
 permissions:
-  discordrelay.admin:
+  craftcord.admin:
     description: Allows access to admin commands
     default: op
-  discordrelay.toggle:
+  craftcord.toggle:
     description: Allows users to toggle relay settings
     default: true
-  discordrelay.send:
+  craftcord.send:
     description: Allows sending messages to Discord
     default: true
-  discordrelay.receive:
+  craftcord.receive:
     description: Allows receiving messages from Discord
-    default: true 
+    default: true
+  craftcord.player:
+    description: Grants all standard player permissions for CraftCord Connect
+    default: true
+    children:
+      craftcord.toggle: true
+      craftcord.send: true
+      craftcord.receive: true 
