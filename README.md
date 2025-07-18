@@ -1,6 +1,6 @@
 # CraftCord-Connect
 
-A Minecraft 1.21.7 plugin that enables bidirectional communication between Minecraft chat and Discord channels.
+A Minecraft 1.21+ plugin that enables bidirectional communication between Minecraft chat and Discord channels.
 
 > **AI Disclosure**: This plugin was created with assistance from AI tools. The code structure, features, and implementation were developed collaboratively with AI assistance to ensure best practices and comprehensive functionality.
 
@@ -19,7 +19,7 @@ A Minecraft 1.21.7 plugin that enables bidirectional communication between Minec
 
 ## Requirements
 
-- Minecraft Server 1.21.7 (Spigot/Paper)
+- Minecraft Server 1.21+ (Spigot/Paper)
 - Java 17 or higher
 - Discord Bot Token
 
